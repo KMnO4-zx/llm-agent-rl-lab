@@ -5,7 +5,7 @@ requires-python = ">=3.13"
 dependencies = [
     "datasets>=5.0.0",
     "numpy>=2.5.1",
-    "pytrio>=0.2.0",
+    "pytrio==0.2.1",
     "swanlab>=0.8.4",
     "torch>=2.12.1",
     "tqdm>=4.68.3",
