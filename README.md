@@ -35,7 +35,7 @@
 
 | 篇章 | 主题 | 内容 |
 | --- | --- | --- |
-| [第 0 篇](./00-loss-function/readme.md) | 强化学习基础：损失函数 | 用直觉解释 `importance_sampling`、`ppo`、`cispo` 分别在优化什么 |
+| [第 0 篇](./00-loss-function/readme.md) | Loss Function | 用直觉解释 `importance_sampling`、`ppo`、`cispo` 分别在优化什么 |
 | [第 1 篇](./01-grpo/readme.md) | GRPO | 复现 GSM8K 上的 GRPO，并比较 `importance_sampling` / `ppo` / `cispo` 三个 loss |
 | 第 2 篇 | OPD | On-Policy Distillation，待更新 |
 
