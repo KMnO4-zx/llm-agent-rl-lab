@@ -1,7 +1,7 @@
 <div align="center">
 
 <a href="https://github.com/KMnO4-zx/llm-agent-rl-lab">
-  <img src="images/llm-agent-rl-lab.png" alt="LLM Agent RL Lab" width=90% />
+  <img src="images/llm-agent-rl-lab.png" alt="LLM Agent RL Lab" width=100% />
 </a>
 
 <h1><i>LLM Agent RL Lab</i></h1>
