@@ -43,7 +43,7 @@ $$
 论文里通常还会除以组内标准差，做标准化：
 
 $$
-A_i = \frac{r_i - \mathrm{mean}(\text{group\_rewards})}{\mathrm{std}(\text{group\_rewards})}
+A_i = \frac{r_i - \mathrm{mean}(r_1, r_2, \ldots, r_G)}{\mathrm{std}(r_1, r_2, \ldots, r_G)}
 $$
 
 这份 demo 为了保持逻辑清楚，只用了 `reward - mean_reward`。对于 GSM8K 这种 0/1 reward 的小实验，这已经足够把 GRPO 的核心跑起来：同一道题里，相对更好的答案被鼓励，相对更差的答案被压低。
