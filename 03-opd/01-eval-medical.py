@@ -6,8 +6,7 @@
 启动命令：
 uv run python 01-eval-medical.py \
     --model Qwen/Qwen3.5-4B \
-    --limit 10 \
-    --concurrency 4
+    --concurrency 16
 """
 
 from __future__ import annotations
@@ -47,6 +46,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help="OpenAI-compatible API base_url")
     parser.add_argument("--api-key-env", default="PYTRIO_API_KEY", help="读取 API key 的环境变量名")
     parser.add_argument("--model", default="Qwen/Qwen3.5-4B", help="模型名或 trio:// sampler 权重路径")
+    parser.add_argument("--system-message", default=CHOICE_SYSTEM_MESSAGE, help="发送给模型的 system message")
     parser.add_argument("--max-tokens", type=int, default=8192, help="每题最多生成 token 数")
     parser.add_argument("--temperature", type=float, default=0.01, help="采样 temperature")
     parser.add_argument("--top-p", type=float, default=0.9, help="采样 top_p")
@@ -130,7 +130,7 @@ async def infer_one(client: AsyncOpenAI, args: argparse.Namespace, prompt: str) 
     response = await client.chat.completions.create(
         model=args.model,
         messages=[
-            {"role": "system", "content": CHOICE_SYSTEM_MESSAGE},
+            {"role": "system", "content": args.system_message},
             {"role": "user", "content": prompt},
         ],
         max_tokens=args.max_tokens,
@@ -253,6 +253,7 @@ async def evaluate(args: argparse.Namespace) -> None:
         "elapsed_seconds": elapsed,
         "model": args.model,
         "concurrency": args.concurrency,
+        "system_message": args.system_message,
         "dataset_path": str(args.dataset_path),
         "output_path": str(args.output_path),
     }

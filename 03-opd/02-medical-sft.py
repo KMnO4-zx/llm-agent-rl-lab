@@ -15,7 +15,7 @@ uv run python 02-medical-sft.py \
 
 正式训练：
 uv run python 02-medical-sft.py \
-    --num-epochs 2 \
+    --num-epochs 3 \
     --batch-size 16 \
     --max-length 2048 \
     --swanlab-mode online
@@ -95,6 +95,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--beta1", type=float, default=0.9, help="Adam beta1")
     parser.add_argument("--beta2", type=float, default=0.95, help="Adam beta2")
     parser.add_argument("--system-message", default=DEFAULT_SYSTEM_MESSAGE, help="训练时插入到 chat template 的 system message；传空字符串表示不加")
+    parser.add_argument("--save-each-epoch", action=argparse.BooleanOptionalAction, default=True, help="是否每个 epoch 结束保存一次 sampler 权重")
+    parser.add_argument("--save-every-steps", type=int, default=500, help="每多少 step 保存一次 sampler 权重；0 表示不按 step 保存")
 
     parser.add_argument("--swanlab", action=argparse.BooleanOptionalAction, default=True, help="是否启用 SwanLab 记录")
     parser.add_argument("--swanlab-project", default="llm-agent-rl-lab", help="SwanLab 项目名")
@@ -114,6 +116,8 @@ def parse_args() -> argparse.Namespace:
         raise ValueError("--sample-size must be >= 0")
     if args.max_steps < 0:
         raise ValueError("--max-steps must be >= 0")
+    if args.save_every_steps < 0:
+        raise ValueError("--save-every-steps must be >= 0")
 
     run_name = build_run_name(args)
     args.swanlab_name = run_name
@@ -426,9 +430,25 @@ def start_swanlab(
         workspace=args.swanlab_workspace,
         mode=args.swanlab_mode,
         config=config,
-        tags=["TRIO", "SFT", "medical", "async"],
+        tags=["PyTrio", "SFT", "medical", "async"],
         log_dir=str(SCRIPT_DIR / "swanlog"),
     )
+
+
+async def save_sampler_weights(
+    training_client: Any,
+    args: argparse.Namespace,
+    swanlab_run: Any | None,
+    name: str,
+    step: int,
+    tag: str,
+) -> str:
+    save_future = await training_client.save_weights_for_sampler_async(name=name)
+    save_result = await save_future
+    print(f"Saved weights [{tag}]: {save_result.path}")
+    if swanlab_run is not None:
+        swanlab.log({f"save/{tag}_weights_path": swanlab.Text(save_result.path)}, step=step)
+    return save_result.path
 
 
 async def train(args: argparse.Namespace) -> None:
@@ -514,10 +534,31 @@ async def train(args: argparse.Namespace) -> None:
                         )
                     )
                     submitted_steps += 1
+                    if args.save_every_steps > 0 and submitted_steps % args.save_every_steps == 0:
+                        # 按 step 保存前，先等已经提交的训练任务完成，确保保存的是明确 step 后的权重。
+                        await asyncio.gather(*log_tasks)
+                        log_tasks = []
+                        await save_sampler_weights(
+                            training_client=training_client,
+                            args=args,
+                            swanlab_run=swanlab_run,
+                            name=f"{args.save_weights_name}-step{submitted_steps:06d}",
+                            step=submitted_steps,
+                            tag=f"step{submitted_steps:06d}",
+                        )
 
                 submit_bar.close()
                 if log_tasks:
                     await asyncio.gather(*log_tasks)
+                if args.save_each_epoch and submitted_steps % steps_per_epoch == 0:
+                    await save_sampler_weights(
+                        training_client=training_client,
+                        args=args,
+                        swanlab_run=swanlab_run,
+                        name=f"{args.save_weights_name}-epoch{epoch + 1:03d}",
+                        step=submitted_steps,
+                        tag=f"epoch{epoch + 1:03d}",
+                    )
 
                 if submitted_steps >= total_steps:
                     break
@@ -525,14 +566,16 @@ async def train(args: argparse.Namespace) -> None:
         if submitted_steps == 0:
             raise RuntimeError("No SFT training step was completed")
 
-        # 保存 sampler 权重，后续可以直接用 trio:// 路径接入 OpenAI-compatible eval 或 OPD。
-        save_future = await training_client.save_weights_for_sampler_async(
-            name=args.save_weights_name
+        # 最终权重保持原始自动命名，方便后续直接复制 trio:// 路径做 eval 或 OPD。
+        final_path = await save_sampler_weights(
+            training_client=training_client,
+            args=args,
+            swanlab_run=swanlab_run,
+            name=args.save_weights_name,
+            step=submitted_steps,
+            tag="final",
         )
-        save_result = await save_future
-        print(f"Saved weights name: {args.save_weights_name}, path: {save_result.path}")
-        if swanlab_run is not None:
-            swanlab.log({"save/weights_path": swanlab.Text(save_result.path)}, step=submitted_steps)
+        print(f"Saved weights name: {args.save_weights_name}, path: {final_path}")
     finally:
         if swanlab_run is not None:
             swanlab.finish()

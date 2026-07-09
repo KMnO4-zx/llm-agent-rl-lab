@@ -6,8 +6,7 @@
 启动命令：
 uv run python 01-eval-ceval.py \
     --model Qwen/Qwen3.5-4B \
-    --limit 10 \
-    --concurrency 4
+    --concurrency 16
 """
 
 from __future__ import annotations
