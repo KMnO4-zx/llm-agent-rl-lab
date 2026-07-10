@@ -4,6 +4,7 @@
 - prompt 只包含 system + user，并用 chat template 加 generation prompt。
 - assistant completion 由脚本构造成 <think>{Complex_CoT}</think> + Response。
 - prompt token 不参与 loss；assistant completion token 和 EOS 参与 loss。
+- checkpoint 同时保存 training state 和 sampler weights；state 用于后续 OPD 初始化 student，sampler weights 用于评测。
 
 小成本试跑：
 uv run python 02-medical-sft.py \
@@ -52,7 +53,6 @@ class TokenizedExample:
     tokens: list[int]
     weights: list[float]
     prompt_len: int
-    assistant_len: int
     truncated: bool
 
 
@@ -95,8 +95,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--beta1", type=float, default=0.9, help="Adam beta1")
     parser.add_argument("--beta2", type=float, default=0.95, help="Adam beta2")
     parser.add_argument("--system-message", default=DEFAULT_SYSTEM_MESSAGE, help="训练时插入到 chat template 的 system message；传空字符串表示不加")
-    parser.add_argument("--save-each-epoch", action=argparse.BooleanOptionalAction, default=True, help="是否每个 epoch 结束保存一次 sampler 权重")
-    parser.add_argument("--save-every-steps", type=int, default=500, help="每多少 step 保存一次 sampler 权重；0 表示不按 step 保存")
+    parser.add_argument("--save-each-epoch", action=argparse.BooleanOptionalAction, default=True, help="是否每个 epoch 结束同时保存 training state 和 sampler 权重")
+    parser.add_argument("--save-every-steps", type=int, default=1000, help="每多少 step 同时保存 training state 和 sampler 权重；0 表示不按 step 保存")
 
     parser.add_argument("--swanlab", action=argparse.BooleanOptionalAction, default=True, help="是否启用 SwanLab 记录")
     parser.add_argument("--swanlab-project", default="llm-agent-rl-lab", help="SwanLab 项目名")
@@ -121,6 +121,7 @@ def parse_args() -> argparse.Namespace:
 
     run_name = build_run_name(args)
     args.swanlab_name = run_name
+    args.save_state_name = run_name
     args.save_weights_name = run_name
     return args
 
@@ -210,12 +211,10 @@ def tokenize_example(
         weights = weights[: args.max_length]
 
     prompt_len = min(len(prompt_tokens), len(tokens))
-    assistant_len = max(len(tokens) - prompt_len, 0)
     return TokenizedExample(
         tokens=tokens,
         weights=weights,
         prompt_len=prompt_len,
-        assistant_len=assistant_len,
         truncated=truncated,
     )
 
@@ -422,6 +421,7 @@ def start_swanlab(
     config["dataset_size"] = dataset_size
     config["total_steps"] = total_steps
     config["run_name"] = args.swanlab_name
+    config["state_name"] = args.save_state_name
     config["weights_name"] = args.save_weights_name
     config["dataset_token_stats"] = token_stats
     return swanlab.init(
@@ -435,9 +435,24 @@ def start_swanlab(
     )
 
 
+async def save_training_state(
+    training_client: Any,
+    swanlab_run: Any | None,
+    name: str,
+    step: int,
+    tag: str,
+) -> str:
+    # save_state 保存完整训练状态；后续 OPD 可用 create_training_client_from_state_async 初始化 student。
+    save_future = await training_client.save_state_async(name=name)
+    save_result = await save_future
+    print(f"Saved state [{tag}]: {save_result.path}")
+    if swanlab_run is not None:
+        swanlab.log({f"save/{tag}_state_path": swanlab.Text(save_result.path)}, step=step)
+    return save_result.path
+
+
 async def save_sampler_weights(
     training_client: Any,
-    args: argparse.Namespace,
     swanlab_run: Any | None,
     name: str,
     step: int,
@@ -451,14 +466,39 @@ async def save_sampler_weights(
     return save_result.path
 
 
+async def save_checkpoint(
+    training_client: Any,
+    swanlab_run: Any | None,
+    state_name: str,
+    weights_name: str,
+    step: int,
+    tag: str,
+) -> tuple[str, str]:
+    state_path = await save_training_state(
+        training_client=training_client,
+        swanlab_run=swanlab_run,
+        name=state_name,
+        step=step,
+        tag=tag,
+    )
+    weights_path = await save_sampler_weights(
+        training_client=training_client,
+        swanlab_run=swanlab_run,
+        name=weights_name,
+        step=step,
+        tag=tag,
+    )
+    return state_path, weights_path
+
+
 async def train(args: argparse.Namespace) -> None:
     random.seed(args.seed)
-    np.random.seed(args.seed)
 
     examples = load_examples(args)
     print(f"Loaded {len(examples)} medical SFT examples")
     print(f"Run name: {args.swanlab_name}")
-    print(f"Weights name: {args.save_weights_name}")
+    print(f"State name: {args.save_state_name}")
+    print(f"Sampler weights name: {args.save_weights_name}")
 
     service_client = trio.ServiceClient()
     training_client = await service_client.create_lora_training_client_async(
@@ -485,6 +525,7 @@ async def train(args: argparse.Namespace) -> None:
 
     swanlab_run = start_swanlab(args, len(processed_examples), total_steps, token_stats)
     submitted_steps = 0
+    last_checkpoint_step = 0
 
     try:
         with tqdm(total=total_steps, desc="Medical SFT async", unit="step") as progress_bar:
@@ -535,47 +576,48 @@ async def train(args: argparse.Namespace) -> None:
                     )
                     submitted_steps += 1
                     if args.save_every_steps > 0 and submitted_steps % args.save_every_steps == 0:
-                        # 按 step 保存前，先等已经提交的训练任务完成，确保保存的是明确 step 后的权重。
+                        # 按 step 保存前，先等已提交任务完成，确保 checkpoint 对齐到明确的 step。
                         await asyncio.gather(*log_tasks)
                         log_tasks = []
-                        await save_sampler_weights(
+                        await save_checkpoint(
                             training_client=training_client,
-                            args=args,
                             swanlab_run=swanlab_run,
-                            name=f"{args.save_weights_name}-step{submitted_steps:06d}",
+                            state_name=f"{args.save_state_name}-step{submitted_steps:06d}",
+                            weights_name=f"{args.save_weights_name}-step{submitted_steps:06d}",
                             step=submitted_steps,
                             tag=f"step{submitted_steps:06d}",
                         )
+                        last_checkpoint_step = submitted_steps
 
                 submit_bar.close()
                 if log_tasks:
                     await asyncio.gather(*log_tasks)
                 if args.save_each_epoch and submitted_steps % steps_per_epoch == 0:
-                    await save_sampler_weights(
+                    await save_checkpoint(
                         training_client=training_client,
-                        args=args,
                         swanlab_run=swanlab_run,
-                        name=f"{args.save_weights_name}-epoch{epoch + 1:03d}",
+                        state_name=f"{args.save_state_name}-epoch{epoch + 1:03d}",
+                        weights_name=f"{args.save_weights_name}-epoch{epoch + 1:03d}",
                         step=submitted_steps,
                         tag=f"epoch{epoch + 1:03d}",
                     )
+                    last_checkpoint_step = submitted_steps
 
                 if submitted_steps >= total_steps:
                     break
 
         if submitted_steps == 0:
             raise RuntimeError("No SFT training step was completed")
-
-        # 最终权重保持原始自动命名，方便后续直接复制 trio:// 路径做 eval 或 OPD。
-        final_path = await save_sampler_weights(
-            training_client=training_client,
-            args=args,
-            swanlab_run=swanlab_run,
-            name=args.save_weights_name,
-            step=submitted_steps,
-            tag="final",
-        )
-        print(f"Saved weights name: {args.save_weights_name}, path: {final_path}")
+        if last_checkpoint_step != submitted_steps:
+            await save_checkpoint(
+                training_client=training_client,
+                swanlab_run=swanlab_run,
+                state_name=f"{args.save_state_name}-step{submitted_steps:06d}",
+                weights_name=f"{args.save_weights_name}-step{submitted_steps:06d}",
+                step=submitted_steps,
+                tag=f"step{submitted_steps:06d}",
+            )
+        print(f"Completed {submitted_steps} SFT steps")
     finally:
         if swanlab_run is not None:
             swanlab.finish()
