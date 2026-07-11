@@ -448,7 +448,6 @@ async def train(args: argparse.Namespace) -> None:
     print("C-Eval is evaluation-only and is not loaded by this training script.")
 
     service_client = trio.ServiceClient()
-    training_client = None
     swanlab_run = None
     try:
         print(f"Creating fresh LoRA student from base: {args.base_model}")
@@ -589,15 +588,8 @@ async def train(args: argparse.Namespace) -> None:
                     completed_steps=completed_steps,
                 )
     finally:
-        try:
-            if training_client is not None:
-                await training_client.close_async()
-        finally:
-            try:
-                service_client.close()
-            finally:
-                if swanlab_run is not None:
-                    swanlab.finish()
+        if swanlab_run is not None:
+            swanlab.finish()
 
 
 def main() -> None:
