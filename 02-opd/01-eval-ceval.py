@@ -117,7 +117,7 @@ def create_client(args: argparse.Namespace) -> AsyncOpenAI:
     load_dotenv(SCRIPT_DIR / ".env", encoding="utf-8-sig", override=True)
     api_key = os.getenv(args.api_key_env)
     if not api_key:
-        raise RuntimeError(f"请在 03-opd/.env 或环境变量中设置 {args.api_key_env}")
+        raise RuntimeError(f"请在 02-opd/.env 或环境变量中设置 {args.api_key_env}")
 
     return AsyncOpenAI(
         base_url=args.base_url,

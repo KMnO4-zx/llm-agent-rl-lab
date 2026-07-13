@@ -10,7 +10,7 @@
 > - Medical SFT 数据集：[FreedomIntelligence/medical-o1-reasoning-SFT](https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT)
 > - MedQA-zh 评测数据：[bigbio/med_qa](https://huggingface.co/datasets/bigbio/med_qa)
 > - C-Eval 数据集：[ceval/ceval-exam](https://huggingface.co/datasets/ceval/ceval-exam)
-> - 前置阅读：[通用 OPD 入门教程](https://github.com/KMnO4-zx/llm-agent-rl-lab/blob/main/03-opd/general-opd/readme.md)
+> - 前置阅读：[通用 OPD 入门教程](https://github.com/KMnO4-zx/llm-agent-rl-lab/blob/main/02-opd/general-opd/readme.md)
 > - PyTRIO Skill：[SwanHubX/pytrio-skill](https://github.com/SwanHubX/pytrio-skill)
 > - SwanLab Skill：[SwanHubX/swanlab-skill](https://github.com/SwanHubX/swanlab-skill)
 
@@ -30,7 +30,7 @@
 
 OPD 的训练信号不一样。它不要求每个问题都有标准答案，也不需要先写一个 reward function。Student 先生成自己的回答，Teacher 再沿着 Student 真正走过的 token 轨迹逐个打分，然后把 Student 拉向 Teacher 更认可的分布。
 
-DeepMath-103K 的版本已经整理成了一份 [通用 OPD 入门教程](https://github.com/KMnO4-zx/llm-agent-rl-lab/blob/main/03-opd/general-opd/readme.md)，把最小训练闭环完整跑通了。但只把算法跑起来还不太够，我更想知道它能不能解决一个真实一点的问题。
+DeepMath-103K 的版本已经整理成了一份 [通用 OPD 入门教程](https://github.com/KMnO4-zx/llm-agent-rl-lab/blob/main/02-opd/general-opd/readme.md)，把最小训练闭环完整跑通了。但只把算法跑起来还不太够，我更想知道它能不能解决一个真实一点的问题。
 
 经好朋友推荐，这次我选择的是中文医疗能力增强。
 
@@ -145,7 +145,7 @@ OPD:  advantage 来自 Teacher 与 Student 的 token logprob 差
 
 OPD 代码里也有 `group_size`，但它只是让一个 prompt 产生更多 Student 轨迹。它不会像 GRPO 一样在组内计算相对 reward，每条 completion 都独立接受 Teacher 的逐 token 监督。
 
-如果你第一次接触 OPD，建议先看 [通用 OPD 入门教程](https://github.com/KMnO4-zx/llm-agent-rl-lab/blob/main/03-opd/general-opd/readme.md)。那篇会更详细地解释 reverse KL、自回归右移、Datum 对齐和同步/异步训练。本文重点放在两套 Medical OPD 实验为什么这样设计，以及它们最后得到了什么结果。
+如果你第一次接触 OPD，建议先看 [通用 OPD 入门教程](https://github.com/KMnO4-zx/llm-agent-rl-lab/blob/main/02-opd/general-opd/readme.md)。那篇会更详细地解释 reverse KL、自回归右移、Datum 对齐和同步/异步训练。本文重点放在两套 Medical OPD 实验为什么这样设计，以及它们最后得到了什么结果。
 
 ## 数据是怎么准备的？
 
@@ -160,7 +160,7 @@ OPD 代码里也有 `group_size`，但它只是让一个 prompt 产生更多 Stu
 下载脚本会在固定 seed 下准备数据：
 
 ```bash
-uv run python 03-opd/00-download-dataset.py
+uv run python 02-opd/00-download-dataset.py
 ```
 
 其中 C-Eval 会先按 `80% / 20%` 划分 OPD train pool 和 held-out test pool，再从 test pool 里固定抽取 300 道题。为了减少医疗领域重叠，排除了 `basic_medicine`、`clinical_medicine`、`physician`、`veterinary_medicine`、高中生物和初中生物，最后保留 8 个非医疗 subset：
@@ -584,10 +584,10 @@ uv sync
 trio login
 ```
 
-训练脚本通过 PyTRIO SDK 运行；两个评测脚本使用 TRIO 的 OpenAI-compatible API，需要在 `03-opd/.env` 中配置同一个 API key：
+训练脚本通过 PyTRIO SDK 运行；两个评测脚本使用 TRIO 的 OpenAI-compatible API，需要在 `02-opd/.env` 中配置同一个 API key：
 
 ```bash
-cp 03-opd/.env.example 03-opd/.env
+cp 02-opd/.env.example 02-opd/.env
 ```
 
 然后把 `.env` 里的占位符替换掉：
@@ -601,13 +601,13 @@ PYTRIO_API_KEY="your_pytrio_api_key_here"
 正式下载：
 
 ```bash
-uv run python 03-opd/00-download-dataset.py
+uv run python 02-opd/00-download-dataset.py
 ```
 
 如果只想先检查数据链路：
 
 ```bash
-uv run python 03-opd/00-download-dataset.py \
+uv run python 02-opd/00-download-dataset.py \
   --medical-sft-sample-size 100 \
   --medqa-sample-size 20 \
   --ceval-train-size 100 \
@@ -619,7 +619,7 @@ uv run python 03-opd/00-download-dataset.py \
 小成本试跑：
 
 ```bash
-uv run python 03-opd/02-medical-sft.py \
+uv run python 02-opd/02-medical-sft.py \
   --sample-size 100 \
   --num-epochs 1 \
   --batch-size 2 \
@@ -630,7 +630,7 @@ uv run python 03-opd/02-medical-sft.py \
 正式训练：
 
 ```bash
-uv run python 03-opd/02-medical-sft.py \
+uv run python 02-opd/02-medical-sft.py \
   --num-epochs 3 \
   --batch-size 16 \
   --max-length 2048 \
@@ -642,7 +642,7 @@ uv run python 03-opd/02-medical-sft.py \
 ### 3. 运行 Medical OPD
 
 ```bash
-uv run python 03-opd/03-medical-opd-async.py \
+uv run python 02-opd/03-medical-opd-async.py \
   --teacher-model-path YOUR_SFT_SAMPLER_WEIGHTS_PATH \
   --steps 300 \
   --batch-size 4 \
@@ -664,7 +664,7 @@ Medical OPD sampler weights  -> 用于评测或推理
 ### 4. 运行 SAR-OPD 的 Base-anchor 阶段
 
 ```bash
-uv run python 03-opd/04-ceval-opd-async.py \
+uv run python 02-opd/04-ceval-opd-async.py \
   --student-state-path YOUR_MEDICAL_OPD_TRAIN_STATE_PATH \
   --steps 300 \
   --batch-size 4 \
@@ -681,7 +681,7 @@ uv run python 03-opd/04-ceval-opd-async.py \
 ### 5. 运行 IDT-OPD
 
 ```bash
-uv run python 03-opd/05-interleaved-multi-teacher-opd.py \
+uv run python 02-opd/05-interleaved-multi-teacher-opd.py \
   --medical-teacher-model-path YOUR_SFT_SAMPLER_WEIGHTS_PATH \
   --steps 600 \
   --medical-steps-per-cycle 1 \
@@ -708,7 +708,7 @@ checkpoint 最好保存在完整调度周期结束后。`1:1` 的周期长度是
 MedQA-zh：
 
 ```bash
-uv run python 03-opd/01-eval-medical.py \
+uv run python 02-opd/01-eval-medical.py \
   --model YOUR_SAMPLER_WEIGHTS_PATH \
   --max-tokens 1024 \
   --concurrency 16
@@ -717,13 +717,13 @@ uv run python 03-opd/01-eval-medical.py \
 C-Eval non-med：
 
 ```bash
-uv run python 03-opd/01-eval-ceval.py \
+uv run python 02-opd/01-eval-ceval.py \
   --model YOUR_SAMPLER_WEIGHTS_PATH \
   --max-tokens 8192 \
   --concurrency 16
 ```
 
-评测结果会写入 `03-opd/eval-results/`，每次会保存逐题 JSONL 和汇总 metrics JSON。比较 checkpoint 时要保持数据文件、system prompt、temperature 和输出预算一致，否则准确率没有直接可比性。
+评测结果会写入 `02-opd/eval-results/`，每次会保存逐题 JSONL 和汇总 metrics JSON。比较 checkpoint 时要保持数据文件、system prompt、temperature 和输出预算一致，否则准确率没有直接可比性。
 
 ## 训练时应该看哪些指标？
 
@@ -801,6 +801,6 @@ IDT-OPD 则把两个 Teacher 放进同一个训练循环。它没有产生一个
 
 ### 实现与实验工具
 
-1. 本文完整代码：[KMnO4-zx/llm-agent-rl-lab](https://github.com/KMnO4-zx/llm-agent-rl-lab/tree/main/03-opd)
+1. 本文完整代码：[KMnO4-zx/llm-agent-rl-lab](https://github.com/KMnO4-zx/llm-agent-rl-lab/tree/main/02-opd)
 2. PyTRIO 文档：[快速开始](https://docs.pytrio.cn/docs) · [Compute Logprobs](https://docs.pytrio.cn/docs/advanced/compute_logprobs) · [自定义 Loss Function](https://docs.pytrio.cn/docs/guide/loss_fn)
 3. SwanLab 文档：[快速开始](https://docs.swanlab.cn/guide_cloud/general/quick-start.html)

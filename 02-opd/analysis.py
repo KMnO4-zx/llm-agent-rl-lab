@@ -4,8 +4,8 @@ The script creates two publication-style figures. Each figure contains two
 subplots and is exported as both a 300-DPI PNG and a vector PDF.
 
 Usage:
-    uv run python 03-opd/analysis.py
-    uv run python 03-opd/analysis.py --output-dir 03-opd/images --dpi 300
+    uv run python 02-opd/analysis.py
+    uv run python 02-opd/analysis.py --output-dir 02-opd/images --dpi 300
 """
 
 from __future__ import annotations

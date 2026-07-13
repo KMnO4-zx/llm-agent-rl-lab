@@ -221,5 +221,5 @@ __marimo__/
 .DS_Store
 
 # Local dataset downloads
-03-opd/datasets/
-03-opd/eval-results/
+02-opd/datasets/
+02-opd/eval-results/
