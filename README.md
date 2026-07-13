@@ -37,8 +37,8 @@
 | --- | --- | --- |
 | [第 0 篇](./00-loss-function/readme.md) | Loss Function | 用直觉解释 `importance_sampling`、`ppo`、`cispo` 分别在优化什么 |
 | [第 1 篇](./01-grpo/readme.md) | GRPO | 复现 GSM8K 上的 GRPO，并比较 `importance_sampling` / `ppo` / `cispo` 三个 loss |
-| [第 2.1 篇](./03-opd/general-opd/readme.md) | General OPD | 用 DeepMath-103K 跑通 Student 采样、Teacher 打分与 reverse KL 更新的最小闭环 |
-| [第 2.2 篇](./03-opd/readme.md) | Medical OPD | 从 Medical SFT 出发，用 SAR-OPD 和 IDT-OPD 增强医疗能力，同时处理通用能力遗忘 |
+| [第 2 篇](./03-opd/general-opd/readme.md) | General OPD | 用 DeepMath-103K 跑通 Student 采样、Teacher 打分与 reverse KL 更新的最小闭环 |
+| [第 2 篇](./03-opd/readme.md) | Medical OPD | 从 Medical SFT 出发，用 SAR-OPD 和 IDT-OPD 增强医疗能力，同时处理通用能力遗忘 |
 | [第 3 篇]() |  | GSPO 还是 Search-R1 呢？ |
 
 
