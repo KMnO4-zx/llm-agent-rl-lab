@@ -7,7 +7,7 @@
 <h1><i>LLM Agent RL Lab</i></h1>
 
 <p>
-  复现和拆解前沿 LLM 强化学习算法，用更简单的代码和更低的 GPU 门槛，把 GRPO、OPD、GSPO、DAPO、OPD、Slime 等方法跑起来，方便复现。
+  复现和拆解前沿 LLM 强化学习算法，用更简单的代码和更低的 GPU 门槛，把 GRPO、OPD、GSPO、DAPO、Search-R1、Slime 等方法跑起来，方便复现。
 </p>
 
 <p>
@@ -23,7 +23,7 @@
 
 ## 这个仓库是什么？
 
-这是一个偏实验记录和教程的仓库。我会用 PyTRIO 复现一组和 LLM / Agent RL 相关的强化学习算法，并尽量把每一篇都写成两部分：
+这是一个偏实验记录和教程的仓库。我会用 PyTRIO 复现一组和 LLM / Agent RL 相关的强化学习算法，主要做三件事：
 
 1. 先把算法讲明白：它从哪篇论文来，解决什么问题，核心变量是什么。
 2. 再用可运行代码复现：数据、reward、loss、训练循环、SwanLab 记录都放在仓库里。
@@ -37,7 +37,10 @@
 | --- | --- | --- |
 | [第 0 篇](./00-loss-function/readme.md) | Loss Function | 用直觉解释 `importance_sampling`、`ppo`、`cispo` 分别在优化什么 |
 | [第 1 篇](./01-grpo/readme.md) | GRPO | 复现 GSM8K 上的 GRPO，并比较 `importance_sampling` / `ppo` / `cispo` 三个 loss |
-| 第 2 篇 | OPD | On-Policy Distillation，待更新 |
+| [OPD 入门](./03-opd/general-opd/readme.md) | General OPD | 用 DeepMath-103K 跑通 Student 采样、Teacher 打分与 reverse KL 更新的最小闭环 |
+| [第 2 篇](./03-opd/readme.md) | Medical OPD | 从 Medical SFT 出发，用 SAR-OPD 和 IDT-OPD 增强医疗能力，同时处理通用能力遗忘 |
+| [第 3 篇]() |  | GSPO 还是 Search-R1 呢？ |
+
 
 ## 快速启动
 
@@ -52,7 +55,7 @@ uv sync
 如果只想把某个 demo 脚本拎到自己的项目里跑：
 
 ```bash
-uv add "datasets>=5.0.0" "numpy>=2.5.1" "pytrio>=0.2.0" "swanlab>=0.8.4" "torch>=2.12.1" "tqdm>=4.68.3"
+uv add "datasets>=5.0.0" "matplotlib>=3.11.0" "numpy>=2.5.1" "openai>=2.44.0" "python-dotenv>=1.2.2" "pytrio==0.2.2" "swanlab>=0.8.4" "torch>=2.12.1" "tqdm>=4.68.3"
 ```
 
 ## 目录结构
@@ -64,6 +67,22 @@ uv add "datasets>=5.0.0" "numpy>=2.5.1" "pytrio>=0.2.0" "swanlab>=0.8.4" "torch>
 ├── 01-grpo/
 │   ├── 01-demo-sync.py
 │   ├── 02-demo-async.py
+│   ├── readme.md
+│   └── images/
+├── 03-opd/
+│   ├── general-opd/
+│   │   ├── 01-demo-sync.py
+│   │   ├── 02-demo-async.py
+│   │   ├── readme.md
+│   │   └── images/
+│   ├── 00-download-dataset.py
+│   ├── 01-eval-ceval.py
+│   ├── 01-eval-medical.py
+│   ├── 02-medical-sft.py
+│   ├── 03-medical-opd-sync.py
+│   ├── 03-medical-opd-async.py
+│   ├── 04-ceval-opd-async.py
+│   ├── 05-interleaved-multi-teacher-opd.py
 │   ├── readme.md
 │   └── images/
 ├── images/
