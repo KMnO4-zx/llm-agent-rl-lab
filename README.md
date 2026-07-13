@@ -15,6 +15,7 @@
   <img alt="LLM RL" src="https://img.shields.io/badge/LLM-RL-111111?style=flat-square" />
   <a href="https://pytrio.cn/"><img alt="PyTRIO" src="https://img.shields.io/badge/PyTRIO-Remote%20Training-d94a45?style=flat-square" /></a>
   <a href="https://swanlab.cn/"><img alt="SwanLab" src="https://img.shields.io/badge/SwanLab-Experiment%20Tracking-258f4b?style=flat-square" /></a>
+  <a href="https://swanlab.cn/@kmno4/llm-agent-rl-lab/overview"><img alt="SwanLab Experiments" src="https://raw.githubusercontent.com/SwanHubX/assets/main/badge2.svg" /></a>
   <img alt="Python" src="https://img.shields.io/badge/Python-3.13%2B-306998?style=flat-square" />
   <img alt="License" src="https://img.shields.io/badge/License-Apache--2.0-cb8d00?style=flat-square" />
 </p>
