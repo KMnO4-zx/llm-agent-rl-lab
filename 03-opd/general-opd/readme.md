@@ -62,9 +62,9 @@ D_{\mathrm{KL}}\left(\pi_\theta \parallel \pi_T\right)
 ```math
 r_t^{\mathrm{KL}}
 =
-\log \pi_\theta(y_t \mid x,y_{<t})
+\log \pi_\theta(y_t \mid x,y_{\lt t})
 -
-\log \pi_T(y_t \mid x,y_{<t}).
+\log \pi_T(y_t \mid x,y_{\lt t}).
 ```
 
 同步 demo 把它转成 advantage：
