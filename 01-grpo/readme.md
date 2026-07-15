@@ -4,6 +4,12 @@
 
 ![](./images/GRPO.png)
 
+<div align="center">
+  <a href="https://www.zhihu.com/people/feng-qi-xia-pian" target="_blank"><img alt="Zhihu" src="https://img.shields.io/badge/Zhihu-知乎-4362f6"></a>
+  <a href="https://www.xiaohongshu.com/user/profile/63c2055e000000002502c58c" target="_blank"><img alt="Rednote" src="https://img.shields.io/badge/Rednote-小红书-e93c49"></a>
+  <a href="https://github.com/KMnO4-zx/llm-agent-rl-lab"><img alt="visitors" src="https://komarev.com/ghpvc/?username=KMnO4-zx-llm-agent-rl-lab-grpo&amp;label=visitors&amp;color=1283c3&amp;style=flat"></a>
+</div>
+
 下一篇会写 OPD，也就是 On-Policy Distillation。它和 GRPO 很像，都是拿当前策略自己采样出来的轨迹继续训练；区别是 GRPO 的信号来自 reward，OPD 的信号来自 teacher 对 student 轨迹的评价。这个我们下一篇再详细的解释。
 
 这件事很适合用 PyTRIO 做。传统上你当然可以拉一台 8 卡机器，自己把训练、采样、权重同步、日志和 checkpoint 全部接起来。问题是，如果我今天只是想比较 3 个 loss 的差异呢？如果明天还想把 `group_size`、学习率、clip 阈值组合成 10 组参数一起跑呢？这时候最大的成本不再是“会不会写 GRPO”，而是你要一直照顾 infra 和 trainer。
