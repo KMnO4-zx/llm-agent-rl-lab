@@ -9,6 +9,14 @@ uv run python train.py \
     --swanlab-mode online \
     --run-name search-r1-qwen35-4b
 
+小规模训练:
+uv run python train.py \
+    --max-steps 20 \
+    --questions-per-batch 8 \
+    --group-size 8 \
+    --save-every 5 \
+    --swanlab-mode online
+
 小规模测试:
 uv run python train.py \
     --max-steps 20 \
