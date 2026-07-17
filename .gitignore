@@ -43,6 +43,10 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+03-search-r1/datasets/
+03-search-r1/eval_result/
+03-search-r1/.env*
+!03-search-r1/.env.example
 nosetests.xml
 coverage.xml
 *.cover
