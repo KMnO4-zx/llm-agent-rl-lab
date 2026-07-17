@@ -5,11 +5,21 @@ requires-python = ">=3.13"
 dependencies = [
     "datasets>=5.0.0",
     "matplotlib>=3.11.0",
+    "modelscope>=1.38.1",
     "numpy>=2.5.1",
     "openai>=2.44.0",
     "python-dotenv>=1.2.2",
     "pytrio==0.2.2",
     "swanlab>=0.8.4",
-    "torch>=2.12.1",
+    "torch>=2.9.1",
     "tqdm>=4.68.3",
 ]
+
+[tool.uv.sources]
+# 本项目本地只做数据与张量处理；训练和采样由远程 PyTRIO 服务执行。
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
