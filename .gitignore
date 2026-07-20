@@ -227,3 +227,5 @@ __marimo__/
 # Local dataset downloads
 02-opd/datasets/
 02-opd/eval-results/
+04-opsd/datasets/
+04-opsd/eval-results/
