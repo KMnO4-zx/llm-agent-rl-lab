@@ -42,7 +42,7 @@ import pytrio as trio
 from tqdm import tqdm
 
 
-trio.configure(timeout=18000)  # 5 小时，足够评测 30 道题
+trio.configure(sampling_timeout=18000,)  # 5 小时，足够评测 30 道题
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_DATASET_PATH = SCRIPT_DIR / "datasets" / "aime_2025"
@@ -140,22 +140,29 @@ def load_aime25(path: Path, limit: int) -> Dataset:
 
 
 def extract_last_boxed(text: str) -> str | None:
-    """提取最后一个支持嵌套花括号的 ``\\boxed{...}``。"""
-    start = text.rfind("\\boxed")
-    if start < 0:
-        return None
-    left = text.find("{", start)
-    if left < 0:
-        return None
-    depth = 0
-    for index in range(left, len(text)):
-        if text[index] == "{":
-            depth += 1
-        elif text[index] == "}":
-            depth -= 1
-            if depth == 0:
-                return text[left + 1 : index].strip()
-    return None
+    """提取最后一个花括号完整闭合的 ``\\boxed{...}``，支持嵌套花括号。
+
+    生成被 max_tokens 截断时，末尾可能只剩半个 ``\\boxed{``，
+    此时向前回退到最近一个完整的 ``\\boxed{...}``。
+    """
+    end = len(text)
+    while True:
+        start = text.rfind("\\boxed", 0, end)
+        if start < 0:
+            return None
+        left = text.find("{", start)
+        if left < 0:
+            end = start
+            continue
+        depth = 0
+        for index in range(left, len(text)):
+            if text[index] == "{":
+                depth += 1
+            elif text[index] == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[left + 1 : index].strip()
+        end = start
 
 
 def normalize_aime_answer(answer: str | None) -> str | None:
