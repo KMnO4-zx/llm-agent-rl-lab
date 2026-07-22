@@ -9,7 +9,7 @@ dependencies = [
     "numpy>=2.5.1",
     "openai>=2.44.0",
     "python-dotenv>=1.2.2",
-    "pytrio==0.2.2",
+    "pytrio==0.2.3",
     "swanlab>=0.8.4",
     "torch>=2.9.1",
     "tqdm>=4.68.3",
