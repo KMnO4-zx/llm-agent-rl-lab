@@ -7,7 +7,7 @@
 <h1><i>LLM Agent RL Lab</i></h1>
 
 <p>
-  复现和拆解前沿 LLM 强化学习算法，用更简单的代码和更低的 GPU 门槛，把 GRPO、OPD、GSPO、DAPO、Search-R1、Slime 等方法跑起来，方便复现。
+  复现和拆解前沿 LLM 强化学习算法，用更简单的代码和更低的 GPU 门槛，把 GRPO、OPD、OPSD、GSPO、DAPO、Search-R1、Slime 等方法跑起来，方便复现。
 </p>
 
 <p>
@@ -41,7 +41,7 @@
 | [第 2 篇](./02-opd/general-opd/readme.md) | General OPD | 用 DeepMath-103K 跑通 Student 采样、Teacher 打分与 reverse KL 的最小闭环 |
 | [第 2 篇](./02-opd/readme.md) | Medical OPD | 从 Medical SFT 出发，用 SAR-OPD 和 IDT-OPD 增强医疗能力，同时保持通用能力 |
 | [第 3 篇](./03-search-r1/readme.md) | Search-R1 | 用 Qwen3.5-4B、PyTRIO 和知乎搜索 API 复现多轮搜索 RL |
-
+| [第 4 篇](./04-opsd/readme.md) | OPSD | 用固定的 step-0 Teacher 蒸馏 Student 自采样轨迹 |
 
 ## 快速启动
 
@@ -56,53 +56,7 @@ uv sync
 如果只想把某个 demo 脚本拎到自己的项目里跑：
 
 ```bash
-uv add "datasets>=5.0.0" "matplotlib>=3.11.0" "numpy>=2.5.1" "openai>=2.44.0" "python-dotenv>=1.2.2" "pytrio==0.2.2" "swanlab>=0.8.4" "torch>=2.12.1" "tqdm>=4.68.3"
-```
-
-## 目录结构
-
-```text
-├── 00-loss-function/
-│   ├── readme.md
-│   └── images/
-├── 01-grpo/
-│   ├── 01-demo-sync.py
-│   ├── 02-demo-async.py
-│   ├── readme.md
-│   └── images/
-├── 02-opd/
-│   ├── general-opd/
-│   │   ├── 01-demo-sync.py
-│   │   ├── 02-demo-async.py
-│   │   ├── readme.md
-│   │   └── images/
-│   ├── 00-download-dataset.py
-│   ├── 01-eval-ceval.py
-│   ├── 01-eval-medical.py
-│   ├── 02-medical-sft.py
-│   ├── 03-medical-opd-sync.py
-│   ├── 03-medical-opd-async.py
-│   ├── 04-ceval-opd-async.py
-│   ├── 05-interleaved-multi-teacher-opd.py
-│   ├── readme.md
-│   └── images/
-├── 03-search-r1/
-│   ├── .env.example
-│   ├── prepare_data.py
-│   ├── data.py
-│   ├── protocol.py
-│   ├── search.py
-│   ├── rollout.py
-│   ├── reward.py
-│   ├── train.py
-│   ├── eval.py
-│   ├── analyse.py
-│   ├── readme.md
-│   └── images/
-├── images/
-│   └── llm-agent-rl-lab.png
-├── pyproject.toml
-└── README.md
+uv add "datasets>=5.0.0" "matplotlib>=3.11.0" "numpy>=2.5.1" "openai>=2.44.0" "python-dotenv>=1.2.2" "pytrio==0.2.3" "swanlab>=0.8.4" "torch>=2.12.1" "tqdm>=4.68.3"
 ```
 
 ## License
