@@ -59,6 +59,12 @@ uv sync
 uv add "datasets>=5.0.0" "matplotlib>=3.11.0" "numpy>=2.5.1" "openai>=2.44.0" "python-dotenv>=1.2.2" "pytrio==0.2.3" "swanlab>=0.8.4" "torch>=2.12.1" "tqdm>=4.68.3"
 ```
 
+## Star History
+
+<div align="center">
+  <img src="./images/github-star-history.png" alt="GitHub Star History" width="700" />
+</div>
+
 ## License
 
 See [LICENSE](./LICENSE).
